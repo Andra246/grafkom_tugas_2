@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>
+    Tugas 2: Implementasi 3D menggunakan WebGL
+  </title>
+
+  <link
+    rel="stylesheet"
+    href="./style.css"
+  />
+</head>
+
+<body>
+
+  <main class="app">
+
+    <header>
+      <h1>
+      Tugas 2: Implementasi 3D menggunakan WebGL
+      </h1>
+
+      <p>
+      <br>
+      Rifat Qurratu Aini Irwandi 5025241235 <br>
+      Mayandra Suhaira Frisiandi 5025241240 <br>
+      Grafika Komputer E
+      </p>
+
+    </header>
+
+    <canvas
+      id="glCanvas"
+      width="960"
+      height="600">
+    </canvas>
+
+    <section id="hud">
+
+      <div>
+        Shading:
+        <span id="shadingInfo"></span>
+      </div>
+
+      <div>
+        Filtering:
+        <span id="filterInfo"></span>
+      </div>
+
+      <div>
+        Wrapping:
+        <span id="wrapInfo"></span>
+      </div>
+
+      <div>
+        UV Scale:
+        <span id="uvInfo"></span>
+      </div>
+
+      <div>
+        Shininess:
+        <span id="shininessInfo"></span>
+      </div>
+
+      <div>
+        Light:
+        <span id="lightInfo"></span>
+      </div>
+
+    </section>
+
+    <section class="controls">
+      <strong>Kontrol:</strong>
+
+      <span>Arrow = Light X/Y</span>
+      <span>W/S = Light Z</span>
+      <span>F = Flat/Smooth</span>
+      <span>T = Filtering</span>
+      <span>G = Wrapping</span>
+      <span>[ / ] = UV Scale</span>
+      <span>- / + = Shininess</span>
+      <span>R = Reset</span>
+    </section>
+
+  </main>
+
+  <script
+    type="module"
+    src="./tes-render.js">
+  </script>
+
+</body>
+
+</html>
