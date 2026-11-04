@@ -211,8 +211,8 @@ const model =
 
 //edit camera disini
 const cameraPosition = [
-  2.5,
-  -2.0,
+  2.7,
+  -1.5,
   3.5
 ];
 
@@ -325,7 +325,7 @@ const shininessLocation =
 // edit cahaya disini
 gl.uniform3fv(
     lightDirectionLocation,
-    [2.0, 3.0, 4.0]
+    [8.0, 6.0, -1.0]
 );
 
 gl.uniform3fv(
@@ -376,7 +376,7 @@ const renderer =
     
     gl.pixelStorei(
       gl.UNPACK_FLIP_Y_WEBGL,
-      true
+      false
     );
 
     gl.texImage2D(
@@ -404,6 +404,10 @@ const renderer =
 //tambah file buat texture disini
 const TestTexture = loadTexture(
   "./img/leaves.png"
+)
+
+const dalemtiang_Texture = loadTexture(
+  "./img/30km.png"
 )
 
 //Buat2 dibawah disini, createcube manggil kubus dari shapes.js, klo bentuk baru harus buat constnya dulu
@@ -471,7 +475,8 @@ const bulatPutihDalam = new GameObject({
   position: [0, 0.5, 0],
   rotation: [90, 30, 0],
   scale: [1, 1, 1],
-  color: [1, 1, 1]
+  color: [1, 1, 1],
+  texture : dalemtiang_Texture
 });
 
 tiang.add(tiangBawah);
@@ -542,13 +547,6 @@ building.add(body);
 building.add(roof);
 building.add(entrance);
 
-//tes pohon pake silinder + bola. 
-//Klo butuh radius/segment/tinggi beda2 bisa buat const banyak
-
-const trunkMesh = renderer.createMesh(
-  "treeTrunk",
-  createCylinder(0.2, 2, 16)
-);
 
 const leavesMesh = renderer.createMesh(
   "treeLeaves",
@@ -556,33 +554,43 @@ const leavesMesh = renderer.createMesh(
 );
 
 // Parent
-const tree = new GameObject({
-  name: "Tree",
+const daun = new GameObject({
+  name: "Daun",
   position: [-2, -1, 0]
 });
 
-// Trunk
-const trunk = new GameObject({
-  name: "Trunk",
-  geometry: trunkMesh,
-  position: [0, 1, 0],
-  color: [0.35, 0.18, 0.08]
-});
-
 // Leaves
-const leaves = new GameObject({
-  name: "Leaves",
+const daun1 = new GameObject({
+  name: "daun1",
   geometry: leavesMesh,
-  position: [0, 2.3, 0],
-  scale: [1.2, 1, 1.2],
+  position: [-10, -1, -15],
+  scale: [10, 10, 10],
   color: [0.1, 0.5, 0.15],
   texture : TestTexture //klo g pake texture, tinggal g usah kasih baris texture
 });
 
-// Connect children
-tree.add(trunk);
-tree.add(leaves);
+const daun2 = new GameObject({
+  name: "daun2",
+  geometry: leavesMesh,
+  position: [-8, 1, -7],
+  scale: [5, 5, 5],
+  color: [0.1, 0.5, 0.15],
+  texture : TestTexture 
+});
 
+const daun3 = new GameObject({
+  name: "daun3",
+  geometry: leavesMesh,
+  position: [-8, 4, -7],
+  scale: [3, 3, 3],
+  color: [0.1, 0.5, 0.15],
+  texture : TestTexture 
+});
+
+// Connect children
+daun.add(daun1);
+daun.add(daun2);
+daun.add(daun3);
 
 function renderObject(object) {
 
@@ -642,11 +650,8 @@ function renderObject(object) {
 
 const scene = [
   //building, //tadi ini buat contoh aja
-  tree,,
+  daun,
   tiang
-  // building, --------> tadi ini buat contoh aja
-  // tree
-
 
 ];
 
