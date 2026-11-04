@@ -1,16 +1,31 @@
 # Tugas 2 Grafika Komputer E
 
-## Stuktur file
+## Anggota Kelompok
+|Nama|NRP|
+|---|---|
+|Rifat Qurratu Aini Irwandi|5025241233|
+|Mayandra Suhaira Frisiandi|5025241240|
 
-- `index.html` = web
-- `style.css` = percantik web
-- `shapes.js` = ini inisialisasi shapes, buat disini klo mau nambah bangun ruang.
-- `renderer.js` = ini auto set buffer dll, g perlu di ubah.
-- `math3d.js` = buat transformasi, g perlu di ubah.
-- `gameObjects.js`= ini func biar gampang manggilnya, g perlu di ubah.
-- `tes-render.js` = nge tes fitur, aku pake ini sih, ada contoh cara nampilin kubus disini
-- `main.js` = bekas tugas 5. Hapus aja g sih, `tes-render.js` jadi main aja
+## Tree
+Scene (Root Node)
+│
+├── Camera (Kamera Sudut Pandang)
+├── Lighting (Pencahayaan)
+│   ├── DirectionalLight (Cahaya Matahari)
+│
+├── TrafficSignObject (Objek Utama Rambu)
+│   └── Pole (Tiang Penopang Silinder)
+│       └── SignBoard (Papan Rambu Utama di Atas)
+│           ├── RedBorder (Mesh Lingkaran Merah)
+│           ├── InnerBackground (Mesh Latar Putih)
+│           └── TextMesh (Mesh Angka "30 Km")
+│
+└── EnvironmentGroup (Grup Lingkungan Latar Belakang)
+    ├── SkyDome (Bidang/Mesh Langit Berawan)
+    └── TreeCollection (Grup Pohon-Pohon)
 
-## Progress
-- Kotak, lingkaran, silinder, cone bisa langsung panggil (bisa custom position, rotation, scale, dan color)
-- Bisa hirarki, contoh di `tes-render.js`
+## Pembagian Tugas
+|Nama|Tugas|
+|---|---|
+|Rifat Qurratu Aini Irwandi|Take foto, Take video, Tiang, Desain aset|
+|Mayandra Suhaira Frisiandi|Texturing, Pepohonan, Setup WebGL, Animasi|
