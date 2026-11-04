@@ -483,71 +483,6 @@ tiang.add(tiangBawah);
 tiang.add(tiangAtas);
 tiang.add(bulatPutihDalam);
 
-const building = new GameObject({
-
-  name: "Building",
-
-  position: [0, 0, 0],
-
-  rotation: [0, 0, 0],
-
-  scale: [1, 1, 1]
-
-});
-
-//child 1 badannya
-const body = new GameObject({
-
-  name: "Body",
-
-  geometry: cubeMesh,
-
-  position: [0, 0, 0],
-
-  scale: [1, 1, 1],
-
-  color: [0.2, 0.6, 1]
-
-});
-
-// child 2 ceritanya atap
-const roof = new GameObject({
-
-  name: "Roof",
-
-  geometry: cubeMesh, //tipe bentuk: kek cube/sphere/cone/dll. Tambahinnya di shapes.js btw klo mau.
-
-  position: [0, 0.5, 0], // [-1 = kiri +1 = kanan, -1 = turun +1 = naik, -1 = mundur +1 = maju ]
-
-  scale: [1.5, 0.2, 1.3], // [-1 = kurus ke samping, -1 = pendek, -1 = kurus tapi ke dalem ]
-
-  color: [0.8, 0.2, 0.2] //rgb
-
-});
-
-// child 3, depan gedungnya/pintu
-const entrance = new GameObject({
-
-  name: "Entrance",
-
-  geometry: cubeMesh,
-
-  position: [0.1, -0.15, 0.65],
-
-  scale: [0.4, 0.5, 0.1],
-
-  color: [0.5, 0.2, 0.15]
-
-
-});
-
-
-//ini konekin ke parent(building). Sintaksnya nama_parent.add(nama_child)
-building.add(body);
-building.add(roof);
-building.add(entrance);
-
-
 const leavesMesh = renderer.createMesh(
   "treeLeaves",
   createSphere(0.9, 16, 12)
@@ -674,8 +609,11 @@ gl.clear(
 function animate(time) {
   const seconds = time * 0.001;
 
-  // contoh animasi rotasi
-  building.rotation[1] = seconds * 10;
+  daun1.rotation[2] = Math.sin(seconds * 0) * 5; // Goyang kiri-kanan (derajat)
+  daun2.rotation[2] = Math.cos(seconds * 2) * 6;
+  daun3.rotation[2] = Math.sin(seconds * 1.8 + 1) * 7;
+
+  daun.position[1] = -1 + Math.sin(seconds * 0.5) * 0.2; //Efek floating (naik-turun kayk melayang)
 
   gl.clear(
     gl.COLOR_BUFFER_BIT |

@@ -27,5 +27,5 @@ Scene (Root Node)
 ## Pembagian Tugas
 |Nama|Tugas|
 |---|---|
-|Rifat Qurratu Aini Irwandi|Take foto, Take video, Tiang, Desain aset|
-|Mayandra Suhaira Frisiandi|Texturing, Pepohonan, Setup WebGL, Animasi|
+|Rifat Qurratu Aini Irwandi|Take foto, Take video, Tiang, Desain aset, Animasi|
+|Mayandra Suhaira Frisiandi|Texturing, Pepohonan, Setup WebGL, Lighting|
