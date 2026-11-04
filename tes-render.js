@@ -34,6 +34,7 @@ const vertexShaderSource = `#version 300 es
 
 in vec3 a_position;
 in vec3 a_normal;
+in vec2 a_texCoord;
 
 uniform mat4 u_model;
 uniform mat4 u_view;
@@ -42,6 +43,7 @@ uniform mat3 u_normalMatrix;
 
 out vec3 v_normal;
 out vec3 v_worldPosition;
+out vec2 v_texCoord;
 
 void main() {
 
@@ -52,6 +54,8 @@ void main() {
 
     v_normal =
         normalize(u_normalMatrix * a_normal);
+
+    v_texCoord = a_texCoord,
 
     gl_Position =
         u_projection *
@@ -65,10 +69,13 @@ precision highp float;
 
 in vec3 v_normal;
 in vec3 v_worldPosition;
+in vec2 v_texCoord;
 
 uniform vec3 u_color;
 uniform vec3 u_lightDirection;
 uniform vec3 u_viewPosition;
+uniform sampler2D u_texture;
+uniform bool u_useTexture;
 
 uniform float u_ambientStrength;
 uniform float u_diffuseStrength;
@@ -85,18 +92,30 @@ void main() {
         u_viewPosition - v_worldPosition
     );
 
-    // Ambient
-    vec3 ambient =
-        u_ambientStrength * u_color;
+    vec4 texel = vec4(1.0);
+    vec3 baseColor = u_color;
 
-    // Diffuse
+    if (u_useTexture) {
+        texel = texture(u_texture, v_texCoord);
+
+        if (u_useTexture && texel.a < 0.1) {
+            discard;
+        }
+
+        baseColor = texel.rgb;
+    }
+
+
+    vec3 ambient =
+        u_ambientStrength * baseColor;
+
     float diffuseFactor =
         max(dot(N, L), 0.0);
 
     vec3 diffuse =
         u_diffuseStrength *
         diffuseFactor *
-        u_color;
+        baseColor;
 
     // Specular
     vec3 R = reflect(-L, N);
@@ -119,7 +138,7 @@ void main() {
     vec3 finalColor =
         ambient + diffuse + specular;
 
-    outColor = vec4(finalColor, 1.0);
+    outColor = vec4(finalColor, u_useTexture ? texel.a : 1.0);
 }
 `;
 
@@ -227,6 +246,20 @@ const projection =
 const colorLocation =
   gl.getUniformLocation(program, "u_color");
 
+const textureLocation =
+  gl.getUniformLocation(
+    program,
+    "u_texture"
+  );
+
+const useTextureLocation =
+  gl.getUniformLocation(
+    program,
+    "u_useTexture"
+  );
+
+gl.uniform1i(textureLocation, 0);
+
 const modelLocation =
   gl.getUniformLocation(
     program,
@@ -309,6 +342,69 @@ gl.uniform1f(shininessLocation, 32.0);
 
 const renderer =
   new Renderer(gl, program);
+
+  
+  function loadTexture(url) {
+
+  const texture = gl.createTexture();
+
+  gl.bindTexture(
+    gl.TEXTURE_2D,
+    texture
+  );
+  
+  gl.texImage2D(
+    gl.TEXTURE_2D,
+    0,
+    gl.RGBA,
+    1,
+    1,
+    0,
+    gl.RGBA,
+    gl.UNSIGNED_BYTE,
+    new Uint8Array([255, 255, 255, 255])
+  );
+
+  const image = new Image();
+
+  image.onload = () => {
+    
+    gl.bindTexture(
+      gl.TEXTURE_2D,
+      texture
+    );
+    
+    gl.pixelStorei(
+      gl.UNPACK_FLIP_Y_WEBGL,
+      true
+    );
+
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      image
+    );
+
+    gl.generateMipmap(gl.TEXTURE_2D);
+
+  };
+
+  image.onerror = () => {
+    console.error("Failed to load texture:", url);
+  };
+
+  image.src = url;
+  
+  return texture;
+}
+
+//tambah file buat texture disini
+const TestTexture = loadTexture(
+  "./img/leaves.png"
+)
 
 //Buat2 dibawah disini, createcube manggil kubus dari shapes.js, klo bentuk baru harus buat constnya dulu
 //contoh dibawah cara makenya
@@ -432,7 +528,8 @@ const leaves = new GameObject({
   geometry: leavesMesh,
   position: [0, 2.3, 0],
   scale: [1.2, 1, 1.2],
-  color: [0.1, 0.5, 0.15]
+  color: [0.1, 0.5, 0.15],
+  texture : TestTexture //klo g pake texture, tinggal g usah kasih baris texture
 });
 
 // Connect children
@@ -466,6 +563,28 @@ function renderObject(object) {
       object.color
     );
 
+    if (object.texture) {
+      gl.activeTexture(gl.TEXTURE0);
+
+      gl.bindTexture(
+        gl.TEXTURE_2D,
+        object.texture
+      );
+
+      gl.uniform1i(
+        useTextureLocation,
+        true
+      );
+
+    } else {
+
+      gl.uniform1i(
+        useTextureLocation,
+        false
+      );
+
+    }
+
     renderer.drawMesh(object.geometry);
   }
 
@@ -475,9 +594,8 @@ function renderObject(object) {
 }
 
 const scene = [
-  // building, --------> tadi ini buat contoh aja
-  // tree
-
+  //building, //tadi ini buat contoh aja
+  tree
 
 ];
 
@@ -490,7 +608,7 @@ gl.viewport(
   canvas.height
 );
 
-gl.clearColor(0.64, 0.76, 0.89, 1.0); //langit langsung di sini
+gl.clearColor(0, 0, 0, 0); //biar img di css
 
 gl.clear(
   gl.COLOR_BUFFER_BIT |

@@ -84,3 +84,9 @@ canvas {
   object-fit: cover;
   border-radius: 8px;
 }
+
+#glCanvas {
+  background-image: url("./img/sky.jpeg");
+  background-size: cover;
+  background-position: center;
+}

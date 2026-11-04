@@ -11,7 +11,8 @@ export class GameObject {
     position = [0, 0, 0],
     rotation = [0, 0, 0],
     scale = [1, 1, 1],
-    color = [0.2, 0.7, 1.0]
+    color = [0.2, 0.7, 1.0],
+    texture = null    
   }) {
 
     this.name = name;
@@ -25,6 +26,8 @@ export class GameObject {
     this.scale = [...scale];
 
     this.color = [...color];
+
+    this.texture = texture;
 
     this.children = [];
 

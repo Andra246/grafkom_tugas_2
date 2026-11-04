@@ -17,6 +17,12 @@ export class Renderer {
         gl.getAttribLocation(
           program,
           "a_normal"
+        ),
+
+      texCoord:
+        gl.getAttribLocation(
+          program,
+          "a_texCoord"
         )
 
     };
@@ -63,6 +69,13 @@ createMesh(name, geometry) {
     const normalBuffer =
         this.createBuffer(geometry.normals);
 
+    const texCoordBuffer = this.createBuffer(
+      geometry.texCoords ??
+      new Float32Array(
+        (geometry.vertexCount ?? geometry.positions.length / 3) * 2
+      )
+    );
+
     // POSITION ATTRIBUTE
     gl.bindBuffer(
         gl.ARRAY_BUFFER,
@@ -99,6 +112,25 @@ createMesh(name, geometry) {
         false,
         0,
         0
+    );
+
+    // TEXTURE COORDINATE ATTRIBUTE
+    gl.bindBuffer(
+      gl.ARRAY_BUFFER,
+      texCoordBuffer
+    );
+
+    gl.enableVertexAttribArray(
+      this.locations.texCoord
+    );
+
+    gl.vertexAttribPointer(
+      this.locations.texCoord,
+      2,
+      gl.FLOAT,
+      false,
+      0,
+      0
     );
 
     // Unbind VAO
