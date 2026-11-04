@@ -475,8 +475,10 @@ function renderObject(object) {
 }
 
 const scene = [
-  building,
-  tree
+  // building, --------> tadi ini buat contoh aja
+  // tree
+
+
 ];
 
 gl.enable(gl.DEPTH_TEST);
@@ -488,7 +490,7 @@ gl.viewport(
   canvas.height
 );
 
-gl.clearColor(0.05, 0.05, 0.1, 1.0);
+gl.clearColor(0.64, 0.76, 0.89, 1.0); //langit langsung di sini
 
 gl.clear(
   gl.COLOR_BUFFER_BIT |
