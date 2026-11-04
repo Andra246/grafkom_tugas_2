@@ -495,3 +495,25 @@ gl.clear(
 for (const object of scene) {
   renderObject(object);
 }
+
+
+function animate(time) {
+  const seconds = time * 0.001;
+
+  // contoh animasi rotasi
+  building.rotation[1] = seconds * 10;
+
+  gl.clear(
+    gl.COLOR_BUFFER_BIT |
+    gl.DEPTH_BUFFER_BIT
+  );
+
+  for (const object of scene) {
+    renderObject(object);
+  }
+
+  requestAnimationFrame(animate);
+}
+
+requestAnimationFrame(animate);
+  
