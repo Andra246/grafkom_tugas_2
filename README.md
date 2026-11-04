@@ -7,22 +7,19 @@
 |Mayandra Suhaira Frisiandi|5025241240|
 
 ## Tree
-Scene (Root Node)
-│
-├── Camera (Kamera Sudut Pandang)
-├── Lighting (Pencahayaan)
-│   ├── DirectionalLight (Cahaya Matahari)
-│
-├── TrafficSignObject (Objek Utama Rambu)
-│   └── Pole (Tiang Penopang Silinder)
-│       └── SignBoard (Papan Rambu Utama di Atas)
-│           ├── RedBorder (Mesh Lingkaran Merah)
-│           ├── InnerBackground (Mesh Latar Putih)
-│           └── TextMesh (Mesh Angka "30 Km")
-│
-└── EnvironmentGroup (Grup Lingkungan Latar Belakang)
-    ├── SkyDome (Bidang/Mesh Langit Berawan)
-    └── TreeCollection (Grup Pohon-Pohon)
+- Scene (Root Node)
+  - Camera (Kamera Sudut Pandang)
+  - Lighting (Pencahayaan)
+    - DirectionalLight (Cahaya Matahari)
+  - TrafficSignObject (Objek Utama Rambu)
+    - Pole (Tiang Penopang Silinder)
+      - SignBoard (Papan Rambu Utama di Atas)
+        - RedBorder (Mesh Lingkaran Merah)
+        - InnerBackground (Mesh Latar Putih)
+        - TextMesh (Mesh Angka "30 Km")
+  - EnvironmentGroup (Grup Lingkungan Latar Belakang)
+    - SkyDome (Bidang/Mesh Langit Berawan)
+    - TreeCollection (Grup Pohon-Pohon)
 
 ## Pembagian Tugas
 |Nama|Tugas|
