@@ -189,6 +189,8 @@ gl.useProgram(program);
 const model =
   Mat4.identity();
 
+
+//edit camera disini
 const cameraPosition = [
   2.5,
   2.0,
@@ -287,7 +289,7 @@ const specularLocation =
 const shininessLocation =
     gl.getUniformLocation(program, "u_shininess");
 
-// Lighting configuration
+// edit cahaya disini
 gl.uniform3fv(
     lightDirectionLocation,
     [2.0, 3.0, 4.0]
@@ -298,6 +300,7 @@ gl.uniform3fv(
     cameraPosition
 );
 
+//edit lain-lain sesuai nama
 gl.uniform1f(ambientLocation, 0.25);
 gl.uniform1f(diffuseLocation, 0.75);
 gl.uniform1f(specularLocation, 0.3);
@@ -491,11 +494,6 @@ gl.clear(
   gl.COLOR_BUFFER_BIT |
   gl.DEPTH_BUFFER_BIT
 );
-
-for (const object of scene) {
-  renderObject(object);
-}
-
 
 function animate(time) {
   const seconds = time * 0.001;
