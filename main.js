@@ -1,219 +1,34 @@
 import {
-  Vec3,
   Mat4,
   degToRad,
   normalMatrixFromMat4
 } from "./math3d.js";
 
-const cubeGeometry = createCube();
+import {
+  Renderer
+} from "./renderer.js";
+
+import {
+  createCube,
+  createCylinder,
+  createSphere,
+  createCone
+} from "./shapes.js";
+
+import {
+  GameObject
+} from "./gameObject.js";
+
 
 const canvas =
-  document.getElementById(
-    "glCanvas"
-  );
+  document.getElementById("glCanvas");
 
 const gl =
-  canvas.getContext(
-    "webgl2"
-  );
+  canvas.getContext("webgl2");
 
 if (!gl) {
-  throw new Error(
-    "WebGL2 tidak tersedia."
-  );
+  throw new Error("WebGL2 unavailable");
 }
-
-gl.enable(
-  gl.DEPTH_TEST
-);
-
-const positions =
-  new Float32Array([
-    // Front
-    -0.5,-0.5, 0.5,
-     0.5,-0.5, 0.5,
-     0.5, 0.5, 0.5,
-
-    -0.5,-0.5, 0.5,
-     0.5, 0.5, 0.5,
-    -0.5, 0.5, 0.5,
-
-    // Back
-     0.5,-0.5,-0.5,
-    -0.5,-0.5,-0.5,
-    -0.5, 0.5,-0.5,
-
-     0.5,-0.5,-0.5,
-    -0.5, 0.5,-0.5,
-     0.5, 0.5,-0.5,
-
-    // Left
-    -0.5,-0.5,-0.5,
-    -0.5,-0.5, 0.5,
-    -0.5, 0.5, 0.5,
-
-    -0.5,-0.5,-0.5,
-    -0.5, 0.5, 0.5,
-    -0.5, 0.5,-0.5,
-
-    // Right
-     0.5,-0.5, 0.5,
-     0.5,-0.5,-0.5,
-     0.5, 0.5,-0.5,
-
-     0.5,-0.5, 0.5,
-     0.5, 0.5,-0.5,
-     0.5, 0.5, 0.5,
-
-    // Top
-    -0.5, 0.5, 0.5,
-     0.5, 0.5, 0.5,
-     0.5, 0.5,-0.5,
-
-    -0.5, 0.5, 0.5,
-     0.5, 0.5,-0.5,
-    -0.5, 0.5,-0.5,
-
-    // Bottom
-    -0.5,-0.5,-0.5,
-     0.5,-0.5,-0.5,
-     0.5,-0.5, 0.5,
-
-    -0.5,-0.5,-0.5,
-     0.5,-0.5, 0.5,
-    -0.5,-0.5, 0.5
-  ]);
-
-const flatNormals =
-  new Float32Array([
-    // Front
-     0, 0, 1,
-     0, 0, 1,
-     0, 0, 1,
-     0, 0, 1,
-     0, 0, 1,
-     0, 0, 1,
-
-    // Back
-     0, 0,-1,
-     0, 0,-1,
-     0, 0,-1,
-     0, 0,-1,
-     0, 0,-1,
-     0, 0,-1,
-
-    // Left
-    -1, 0, 0,
-    -1, 0, 0,
-    -1, 0, 0,
-    -1, 0, 0,
-    -1, 0, 0,
-    -1, 0, 0,
-
-    // Right
-     1, 0, 0,
-     1, 0, 0,
-     1, 0, 0,
-     1, 0, 0,
-     1, 0, 0,
-     1, 0, 0,
-
-    // Top
-     0, 1, 0,
-     0, 1, 0,
-     0, 1, 0,
-     0, 1, 0,
-     0, 1, 0,
-     0, 1, 0,
-
-    // Bottom
-     0,-1, 0,
-     0,-1, 0,
-     0,-1, 0,
-     0,-1, 0,
-     0,-1, 0,
-     0,-1, 0
-  ]);
-
-function createSmoothNormals(
-  positions
-) {
-  const normals =
-    new Float32Array(
-      positions.length
-    );
-
-  for (
-    let i = 0;
-    i < positions.length;
-    i += 3
-  ) {
-    const x =
-      positions[i];
-
-    const y =
-      positions[i + 1];
-
-    const z =
-      positions[i + 2];
-
-    const length =
-      Math.hypot(
-        x,
-        y,
-        z
-      );
-
-    normals[i] =
-      x / length;
-
-    normals[i + 1] =
-      y / length;
-
-    normals[i + 2] =
-      z / length;
-  }
-
-  return normals;
-}
-
-const smoothNormals =
-  createSmoothNormals(
-    positions
-  );
-
-function createCubeUVs() {
-  const faceUV = [
-    0, 0,
-    1, 0,
-    1, 1,
-
-    0, 0,
-    1, 1,
-    0, 1
-  ];
-
-  const uv = [];
-
-  for (
-    let face = 0;
-    face < 6;
-    face++
-  ) {
-    uv.push(
-      ...faceUV
-    );
-  }
-
-  return new Float32Array(
-    uv
-  );
-}
-
-const texCoords =
-  createCubeUVs();
-
-//shader
 
 const vertexShaderSource = `#version 300 es
 
@@ -224,152 +39,111 @@ in vec2 a_texCoord;
 uniform mat4 u_model;
 uniform mat4 u_view;
 uniform mat4 u_projection;
-
 uniform mat3 u_normalMatrix;
 
-uniform float u_uvScale;
-
-out vec3 v_worldPosition;
 out vec3 v_normal;
+out vec3 v_worldPosition;
 out vec2 v_texCoord;
 
 void main() {
-  vec4 worldPosition =
-    u_model *
-    vec4(
-      a_position,
-      1.0
-    );
 
-  v_worldPosition =
-    worldPosition.xyz;
+    vec4 worldPosition =
+        u_model * vec4(a_position, 1.0);
 
-  v_normal =
-    u_normalMatrix *
-    a_normal;
+    v_worldPosition = worldPosition.xyz;
 
-  v_texCoord =
-    a_texCoord *
-    u_uvScale;
+    v_normal =
+        normalize(u_normalMatrix * a_normal);
 
-  gl_Position =
-    u_projection
-    *
-    u_view
-    *
-    worldPosition;
-}
-`;
+    v_texCoord = a_texCoord,
+
+    gl_Position =
+        u_projection *
+        u_view *
+        worldPosition;
+}`;
 
 const fragmentShaderSource = `#version 300 es
 
 precision highp float;
 
-in vec3 v_worldPosition;
 in vec3 v_normal;
+in vec3 v_worldPosition;
 in vec2 v_texCoord;
 
-uniform vec3 u_lightPosition;
-uniform vec3 u_lightColor;
-uniform vec3 u_cameraPosition;
+uniform vec3 u_color;
+uniform vec3 u_lightDirection;
+uniform vec3 u_viewPosition;
+uniform sampler2D u_texture;
+uniform bool u_useTexture;
 
 uniform float u_ambientStrength;
+uniform float u_diffuseStrength;
+uniform float u_specularStrength;
 uniform float u_shininess;
-
-uniform sampler2D u_texture;
 
 out vec4 outColor;
 
 void main() {
-  vec3 N =
-    normalize(
-      v_normal
+
+    vec3 N = normalize(v_normal);
+    vec3 L = normalize(u_lightDirection);
+    vec3 V = normalize(
+        u_viewPosition - v_worldPosition
     );
 
-  vec3 L =
-    normalize(
-      u_lightPosition
-      -
-      v_worldPosition
-    );
+    vec4 texel = vec4(1.0);
+    vec3 baseColor = u_color;
 
-  vec3 V =
-    normalize(
-      u_cameraPosition
-      -
-      v_worldPosition
-    );
+    if (u_useTexture) {
+        texel = texture(u_texture, v_texCoord);
 
-  float diff =
-    max(
-      dot(N, L),
-      0.0
-    );
+        if (u_useTexture && texel.a < 0.1) {
+            discard;
+        }
 
-  vec3 R =
-    reflect(
-      -L,
-      N
-    );
+        baseColor = texel.rgb;
+    }
 
-  float spec = 0.0;
 
-  if (
-    diff > 0.0
-  ) {
-    spec =
-      pow(
-        max(
-          dot(R, V),
-          0.0
-        ),
-        u_shininess
-      );
-  }
+    vec3 ambient =
+        u_ambientStrength * baseColor;
 
-  vec3 texColor =
-    texture(
-      u_texture,
-      v_texCoord
-    ).rgb;
+    float diffuseFactor =
+        max(dot(N, L), 0.0);
 
-  vec3 ambient =
-    u_ambientStrength
-    *
-    texColor;
+    vec3 diffuse =
+        u_diffuseStrength *
+        diffuseFactor *
+        baseColor;
 
-  vec3 diffuse =
-    diff
-    *
-    u_lightColor
-    *
-    texColor;
+    // Specular
+    vec3 R = reflect(-L, N);
 
-  vec3 specular =
-    spec
-    *
-    u_lightColor;
+    float specularFactor =
+        pow(
+            max(dot(V, R), 0.0),
+            u_shininess
+        );
 
-  vec3 finalColor =
-    ambient
-    +
-    diffuse
-    +
-    specular;
+    vec3 specular =
+        u_specularStrength *
+        specularFactor *
+        vec3(1.0);
 
-  outColor =
-    vec4(
-      finalColor,
-      1.0
-    );
+    if (diffuseFactor <= 0.0) {
+        specular = vec3(0.0);
+    }
+
+    vec3 finalColor =
+        ambient + diffuse + specular;
+
+    outColor = vec4(finalColor, u_useTexture ? texel.a : 1.0);
 }
 `;
 
-function createShader(
-  gl,
-  type,
-  source
-) {
+function createShader(type, source) {
+
   const shader =
     gl.createShader(type);
 
@@ -378,122 +152,113 @@ function createShader(
     source
   );
 
-  gl.compileShader(
-    shader
-  );
+  gl.compileShader(shader);
 
-  if (
-    !gl.getShaderParameter(
-      shader,
-      gl.COMPILE_STATUS
-    )
-  ) {
-    const info =
-      gl.getShaderInfoLog(
-        shader
-      );
-
-    gl.deleteShader(
-      shader
-    );
-
+  if (!gl.getShaderParameter(
+    shader,
+    gl.COMPILE_STATUS
+  )) {
     throw new Error(
-      "Shader compile error:\n" +
-      info
+      gl.getShaderInfoLog(shader)
     );
   }
 
   return shader;
 }
 
-function createProgram(
-  gl,
-  vertexShader,
-  fragmentShader
-) {
-  const program =
-    gl.createProgram();
-
-  gl.attachShader(
-    program,
-    vertexShader
-  );
-
-  gl.attachShader(
-    program,
-    fragmentShader
-  );
-
-  gl.linkProgram(
-    program
-  );
-
-  if (
-    !gl.getProgramParameter(
-      program,
-      gl.LINK_STATUS
-    )
-  ) {
-    const info =
-      gl.getProgramInfoLog(
-        program
-      );
-
-    gl.deleteProgram(
-      program
-    );
-
-    throw new Error(
-      "Program link error:\n" +
-      info
-    );
-  }
-
-  return program;
-}
 
 const vertexShader =
   createShader(
-    gl,
     gl.VERTEX_SHADER,
     vertexShaderSource
   );
 
 const fragmentShader =
   createShader(
-    gl,
     gl.FRAGMENT_SHADER,
     fragmentShaderSource
   );
 
 const program =
-  createProgram(
-    gl,
-    vertexShader,
-    fragmentShader
-  );
+  gl.createProgram();
 
-gl.useProgram(
-  program
+gl.attachShader(
+  program,
+  vertexShader
 );
 
-const positionLocation =
-  gl.getAttribLocation(
-    program,
-    "a_position"
+gl.attachShader(
+  program,
+  fragmentShader
+);
+
+gl.linkProgram(program);
+
+if (!gl.getProgramParameter(
+  program,
+  gl.LINK_STATUS
+)) {
+  throw new Error(
+    gl.getProgramInfoLog(program)
+  );
+}
+
+gl.useProgram(program);
+
+const model =
+  Mat4.identity();
+
+
+//edit camera disini
+const cameraPosition = [
+  2.7,
+  -1.5,
+  3.5
+];
+
+const cameraTarget = [
+  0.0,
+  0.0,
+  0.0
+];
+
+const cameraUp = [
+  0.0,
+  1.0,
+  0.0
+];
+
+const view =
+  Mat4.lookAt(
+    cameraPosition,
+    cameraTarget,
+    cameraUp
   );
 
-const normalLocation =
-  gl.getAttribLocation(
+const projection =
+  Mat4.perspective(
+    degToRad(60),
+    canvas.width / canvas.height,
+    0.1,
+    100.0
+  );
+ 
+const colorLocation =
+  gl.getUniformLocation(program, "u_color");
+
+const textureLocation =
+  gl.getUniformLocation(
     program,
-    "a_normal"
+    "u_texture"
   );
 
-const texCoordLocation =
-  gl.getAttribLocation(
+const useTextureLocation =
+  gl.getUniformLocation(
     program,
-    "a_texCoord"
+    "u_useTexture"
   );
+
+gl.uniform1i(textureLocation, 0);
 
 const modelLocation =
   gl.getUniformLocation(
@@ -513,940 +278,354 @@ const projectionLocation =
     "u_projection"
   );
 
+
+gl.uniformMatrix4fv(
+  modelLocation,
+  false,
+  model
+);
+
+gl.uniformMatrix4fv(
+  viewLocation,
+  false,
+  view
+);
+
+gl.uniformMatrix4fv(
+  projectionLocation,
+  false,
+  projection
+);
+
 const normalMatrixLocation =
   gl.getUniformLocation(
     program,
     "u_normalMatrix"
   );
 
-const lightPositionLocation =
-  gl.getUniformLocation(
-    program,
-    "u_lightPosition"
-  );
 
-const lightColorLocation =
-  gl.getUniformLocation(
-    program,
-    "u_lightColor"
-  );
+const lightDirectionLocation =
+    gl.getUniformLocation(program, "u_lightDirection");
 
-const cameraPositionLocation =
-  gl.getUniformLocation(
-    program,
-    "u_cameraPosition"
-  );
+const viewPositionLocation =
+    gl.getUniformLocation(program, "u_viewPosition");
 
 const ambientLocation =
-  gl.getUniformLocation(
-    program,
-    "u_ambientStrength"
-  );
+    gl.getUniformLocation(program, "u_ambientStrength");
+
+const diffuseLocation =
+    gl.getUniformLocation(program, "u_diffuseStrength");
+
+const specularLocation =
+    gl.getUniformLocation(program, "u_specularStrength");
 
 const shininessLocation =
-  gl.getUniformLocation(
-    program,
-    "u_shininess"
-  );
+    gl.getUniformLocation(program, "u_shininess");
 
-const textureLocation =
-  gl.getUniformLocation(
-    program,
-    "u_texture"
-  );
-
-const uvScaleLocation =
-  gl.getUniformLocation(
-    program,
-    "u_uvScale"
-  );
-
-function createArrayBuffer(
-  data
-) {
-  const buffer =
-    gl.createBuffer();
-
-  gl.bindBuffer(
-    gl.ARRAY_BUFFER,
-    buffer
-  );
-
-  gl.bufferData(
-    gl.ARRAY_BUFFER,
-    data,
-    gl.STATIC_DRAW
-  );
-
-  return buffer;
-}
-
-const positionBuffer =
-  createArrayBuffer(
-    positions
-  );
-
-const flatNormalBuffer =
-  createArrayBuffer(
-    flatNormals
-  );
-
-const smoothNormalBuffer =
-  createArrayBuffer(
-    smoothNormals
-  );
-
-const texCoordBuffer =
-  createArrayBuffer(
-    texCoords
-  );
-
-function setupAttribute(
-  buffer,
-  location,
-  size
-) {
-  gl.bindBuffer(
-    gl.ARRAY_BUFFER,
-    buffer
-  );
-
-  gl.enableVertexAttribArray(
-    location
-  );
-
-  gl.vertexAttribPointer(
-    location,
-    size,
-    gl.FLOAT,
-    false,
-    0,
-    0
-  );
-}
-
-setupAttribute(
-  positionBuffer,
-  positionLocation,
-  3
+// edit cahaya disini
+gl.uniform3fv(
+    lightDirectionLocation,
+    [8.0, 6.0, -1.0]
 );
 
-setupAttribute(
-  texCoordBuffer,
-  texCoordLocation,
-  2
+gl.uniform3fv(
+    viewPositionLocation,
+    cameraPosition
 );
 
-function createCheckerTexture() {
-  const size =
-    64;
+//edit lain-lain sesuai nama
+gl.uniform1f(ambientLocation, 0.25);
+gl.uniform1f(diffuseLocation, 0.75);
+gl.uniform1f(specularLocation, 0.3);
+gl.uniform1f(shininessLocation, 32.0);
 
-  const source =
-    document.createElement(
-      "canvas"
-    );
 
-  source.width =
-    size;
+const renderer =
+  new Renderer(gl, program);
 
-  source.height =
-    size;
+  
+  function loadTexture(url) {
 
-  const ctx =
-    source.getContext(
-      "2d"
-    );
-
-  const cells =
-    8;
-
-  const cellSize =
-    size / cells;
-
-  for (
-    let y = 0;
-    y < cells;
-    y++
-  ) {
-    for (
-      let x = 0;
-      x < cells;
-      x++
-    ) {
-      const even =
-        (
-          x + y
-        ) % 2 === 0;
-
-      ctx.fillStyle =
-        even
-          ? "#f8fafc"
-          : "#0ea5e9";
-
-      ctx.fillRect(
-        x * cellSize,
-        y * cellSize,
-        cellSize,
-        cellSize
-      );
-    }
-  }
-
-  const texture =
-    gl.createTexture();
+  const texture = gl.createTexture();
 
   gl.bindTexture(
     gl.TEXTURE_2D,
     texture
   );
-
+  
   gl.texImage2D(
     gl.TEXTURE_2D,
     0,
     gl.RGBA,
+    1,
+    1,
+    0,
     gl.RGBA,
     gl.UNSIGNED_BYTE,
-    source
+    new Uint8Array([255, 255, 255, 255])
   );
 
-  gl.generateMipmap(
-    gl.TEXTURE_2D
-  );
+  const image = new Image();
 
+  image.onload = () => {
+    
+    gl.bindTexture(
+      gl.TEXTURE_2D,
+      texture
+    );
+    
+    gl.pixelStorei(
+      gl.UNPACK_FLIP_Y_WEBGL,
+      false
+    );
+
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      image
+    );
+
+    gl.generateMipmap(gl.TEXTURE_2D);
+
+  };
+
+  image.onerror = () => {
+    console.error("Failed to load texture:", url);
+  };
+
+  image.src = url;
+  
   return texture;
 }
 
-const texture =
-  createCheckerTexture();
+//tambah file buat texture disini
+const TestTexture = loadTexture(
+  "./img/leaves.png"
+)
 
-gl.activeTexture(
-  gl.TEXTURE0
+const dalemtiang_Texture = loadTexture(
+  "./img/30km.png"
+)
+
+//Buat2 dibawah disini, createcube manggil kubus dari shapes.js, klo bentuk baru harus buat constnya dulu
+//contoh dibawah cara makenya
+
+const cubeMesh = renderer.createMesh(
+  "cube",
+  createCube()
 );
 
-gl.bindTexture(
-  gl.TEXTURE_2D,
-  texture
+const tiangBawahMesh = renderer.createMesh(
+  "cylinder",
+  createCylinder(0.1, 4, 32) //radius, tinggi, segment/seberapa smooth
 );
 
-gl.uniform1i(
-  textureLocation,
-  0
+const tiangAtasMesh = renderer.createMesh(
+  "cylinder",
+  createCylinder(1.0, 0.1, 32) //radius, tinggi, segment/seberapa smooth
 );
 
-let filterMode =
-  "LINEAR";
+const bulatPutihDalamMesh = renderer.createMesh(
+  "cylinder",
+  createCylinder(0.85, 0.11, 32)
+);
 
-function applyFiltering() {
-  gl.bindTexture(
-    gl.TEXTURE_2D,
-    texture
-  );
+const sphereMesh = renderer.createMesh(
+  "sphere",
+  createSphere(1, 32, 24) //radius, segment, rings
+);
 
-  if (
-    filterMode ===
-    "NEAREST"
-  ) {
-    gl.texParameteri(
-      gl.TEXTURE_2D,
-      gl.TEXTURE_MIN_FILTER,
-      gl.NEAREST
+const coneMesh = renderer.createMesh(
+  "cone",
+  createCone(1, 2, 32) //radius, tinggi, segmen
+);
+
+//ini parent, ini gak dipanggil, lebih ke nama grupnya aja
+//Kalau mau edit seluruh grup, edit disini
+const tiang = new GameObject({
+  name: "Tiang",
+  position: [0, 0, 0],
+  rotation: [0, 0, 0],
+  scale: [1, 1, 1]
+});
+
+const tiangBawah = new GameObject({
+  name: "TiangBawah",
+  geometry: tiangBawahMesh,
+  position: [0, -4.5, 0],
+  scale: [1, 2, 1],
+  color: [1, 1, 1]
+});
+
+const tiangAtas = new GameObject({
+  name: "TiangAtas",
+  geometry: tiangAtasMesh,
+  position: [0, 0.5, 0],
+  rotation: [90, 30, 0],
+  scale: [1, 1, 1],
+  color: [1, 0, 0]
+});
+
+const bulatPutihDalam = new GameObject({
+  name: "BulatPutihDalam",
+  geometry: bulatPutihDalamMesh,
+  position: [0, 0.5, 0],
+  rotation: [90, 30, 0],
+  scale: [1, 1, 1],
+  color: [1, 1, 1],
+  texture : dalemtiang_Texture
+});
+
+tiang.add(tiangBawah);
+tiang.add(tiangAtas);
+tiang.add(bulatPutihDalam);
+
+const leavesMesh = renderer.createMesh(
+  "treeLeaves",
+  createSphere(0.9, 16, 12)
+);
+
+// Parent
+const daun = new GameObject({
+  name: "Daun",
+  position: [-2, -1, 0]
+});
+
+// Leaves
+const daun1 = new GameObject({
+  name: "daun1",
+  geometry: leavesMesh,
+  position: [-10, -1, -15],
+  scale: [10, 10, 10],
+  color: [0.1, 0.5, 0.15],
+  texture : TestTexture //klo g pake texture, tinggal g usah kasih baris texture
+});
+
+const daun2 = new GameObject({
+  name: "daun2",
+  geometry: leavesMesh,
+  position: [-8, 1, -7],
+  scale: [5, 5, 5],
+  color: [0.1, 0.5, 0.15],
+  texture : TestTexture 
+});
+
+const daun3 = new GameObject({
+  name: "daun3",
+  geometry: leavesMesh,
+  position: [-8, 4, -7],
+  scale: [3, 3, 3],
+  color: [0.1, 0.5, 0.15],
+  texture : TestTexture 
+});
+
+// Connect children
+daun.add(daun1);
+daun.add(daun2);
+daun.add(daun3);
+
+function renderObject(object) {
+
+  const model = object.createModelMatrix();
+
+  if (object.geometry) {
+
+    const normalMatrix =
+      normalMatrixFromMat4(model);
+
+    gl.uniformMatrix3fv(
+      normalMatrixLocation,
+      false,
+      normalMatrix
     );
 
-    gl.texParameteri(
-      gl.TEXTURE_2D,
-      gl.TEXTURE_MAG_FILTER,
-      gl.NEAREST
-    );
-  } else {
-    gl.texParameteri(
-      gl.TEXTURE_2D,
-      gl.TEXTURE_MIN_FILTER,
-      gl.LINEAR
+    gl.uniformMatrix4fv(
+      modelLocation,
+      false,
+      model
     );
 
-    gl.texParameteri(
-      gl.TEXTURE_2D,
-      gl.TEXTURE_MAG_FILTER,
-      gl.LINEAR
+    gl.uniform3fv(
+      colorLocation,
+      object.color
     );
+
+    if (object.texture) {
+      gl.activeTexture(gl.TEXTURE0);
+
+      gl.bindTexture(
+        gl.TEXTURE_2D,
+        object.texture
+      );
+
+      gl.uniform1i(
+        useTextureLocation,
+        true
+      );
+
+    } else {
+
+      gl.uniform1i(
+        useTextureLocation,
+        false
+      );
+
+    }
+
+    renderer.drawMesh(object.geometry);
+  }
+
+  for (const child of object.children) {
+    renderObject(child);
   }
 }
 
-const wrapModes = [
-  "REPEAT",
-  "CLAMP_TO_EDGE",
-  "MIRRORED_REPEAT"
+const scene = [
+  //building, //tadi ini buat contoh aja
+  daun,
+  tiang
+
 ];
 
-let wrapIndex =
-  0;
+gl.enable(gl.DEPTH_TEST);
 
-function applyWrapping() {
-  gl.bindTexture(
-    gl.TEXTURE_2D,
-    texture
-  );
-
-  const modeName =
-    wrapModes[
-      wrapIndex
-    ];
-
-  let mode =
-    gl.REPEAT;
-
-  if (
-    modeName ===
-    "CLAMP_TO_EDGE"
-  ) {
-    mode =
-      gl.CLAMP_TO_EDGE;
-  }
-
-  if (
-    modeName ===
-    "MIRRORED_REPEAT"
-  ) {
-    mode =
-      gl.MIRRORED_REPEAT;
-  }
-
-  gl.texParameteri(
-    gl.TEXTURE_2D,
-    gl.TEXTURE_WRAP_S,
-    mode
-  );
-
-  gl.texParameteri(
-    gl.TEXTURE_2D,
-    gl.TEXTURE_WRAP_T,
-    mode
-  );
-}
-
-const cube = {
-  rotationX: 20,
-  rotationY: 30,
-
-  scaleX: 1.0,
-  scaleY: 1.0,
-  scaleZ: 1.0
-};
-
-const camera = {
-  position: [
-    0.0,
-    1.4,
-    4.0
-  ],
-
-  target: [
-    0.0,
-    0.0,
-    0.0
-  ],
-
-  up: [
-    0.0,
-    1.0,
-    0.0
-  ]
-};
-
-const light = {
-  position: [
-    2.0,
-    2.0,
-    2.0
-  ],
-
-  color: [
-    1.0,
-    1.0,
-    1.0
-  ]
-};
-
-let ambientStrength =
-  0.18;
-
-let shininess =
-  32.0;
-
-let uvScale =
-  1.0;
-
-let shadingMode =
-  "FLAT";
-
-function createModelMatrix() {
-  const rx =
-    Mat4.rotationX(
-      degToRad(
-        cube.rotationX
-      )
-    );
-
-  const ry =
-    Mat4.rotationY(
-      degToRad(
-        cube.rotationY
-      )
-    );
-
-  const s =
-    Mat4.scaling(
-      cube.scaleX,
-      cube.scaleY,
-      cube.scaleZ
-    );
-
-  let model =
-    Mat4.identity();
-
-  model =
-    Mat4.multiply(
-      model,
-      s
-    );
-
-  model =
-    Mat4.multiply(
-      model,
-      rx
-    );
-
-  model =
-    Mat4.multiply(
-      model,
-      ry
-    );
-
-  return model;
-}
-
-const view =
-  Mat4.lookAt(
-    camera.position,
-    camera.target,
-    camera.up
-  );
-
-const aspect =
-  canvas.width /
-  canvas.height;
-
-const projection =
-  Mat4.perspective(
-    degToRad(60),
-    aspect,
-    0.1,
-    100.0
-  );
-
-const keys = {};
-
-window.addEventListener(
-  "keydown",
-  (event) => {
-    keys[
-      event.key.toLowerCase()
-    ] = true;
-
-    if (
-      event.key.startsWith(
-        "Arrow"
-      )
-    ) {
-      event.preventDefault();
-    }
-  }
+gl.viewport(
+  0,
+  0,
+  canvas.width,
+  canvas.height
 );
 
-window.addEventListener(
-  "keyup",
-  (event) => {
-    keys[
-      event.key.toLowerCase()
-    ] = false;
-  }
+gl.clearColor(0, 0, 0, 0); //biar img di css
+
+gl.clear(
+  gl.COLOR_BUFFER_BIT |
+  gl.DEPTH_BUFFER_BIT
 );
 
-const lightSpeed =
-  2.0;
+function animate(time) {
+  const seconds = time * 0.001;
 
-function updateLight(
-  dt
-) {
-  if (
-    keys["arrowleft"]
-  ) {
-    light.position[0] -=
-      lightSpeed * dt;
-  }
+  daun1.rotation[1] = Math.sin(seconds * 0.1) * 5; // Goyang kiri-kanan (derajat)
+  daun2.rotation[1] = Math.cos(seconds * 2) * 6;
+  daun3.rotation[1] = Math.sin(seconds * 1.8 + 1) * 7;
 
-  if (
-    keys["arrowright"]
-  ) {
-    light.position[0] +=
-      lightSpeed * dt;
-  }
-
-  if (
-    keys["arrowup"]
-  ) {
-    light.position[1] +=
-      lightSpeed * dt;
-  }
-
-  if (
-    keys["arrowdown"]
-  ) {
-    light.position[1] -=
-      lightSpeed * dt;
-  }
-
-  if (
-    keys["w"]
-  ) {
-    light.position[2] -=
-      lightSpeed * dt;
-  }
-
-  if (
-    keys["s"]
-  ) {
-    light.position[2] +=
-      lightSpeed * dt;
-  }
-
-  if (
-    keys["c"]
-  ) {
-    light.color = [
-    1.0,
-    0.0,
-    0.0,
-  ]
-  }
-}
-
-window.addEventListener(
-  "keydown",
-  (event) => {
-    if (
-      event.key.toLowerCase()
-        === "f"
-      &&
-      !event.repeat
-    ) {
-      shadingMode =
-        shadingMode === "FLAT"
-          ? "SMOOTH"
-          : "FLAT";
-    }
-  }
-);
-
-window.addEventListener(
-  "keydown",
-  (event) => {
-    if (
-      event.key.toLowerCase()
-        === "t"
-      &&
-      !event.repeat
-    ) {
-      filterMode =
-        filterMode === "LINEAR"
-          ? "NEAREST"
-          : "LINEAR";
-
-      applyFiltering();
-    }
-  }
-);
-
-window.addEventListener(
-  "keydown",
-  (event) => {
-    if (
-      event.key.toLowerCase()
-        === "g"
-      &&
-      !event.repeat
-    ) {
-      wrapIndex =
-        (
-          wrapIndex + 1
-        )
-        %
-        wrapModes.length;
-
-      applyWrapping();
-    }
-  }
-);
-
-const uvScaleSpeed =
-  1.5;
-
-function updateUVScale(
-  dt
-) {
-  if (
-    keys["["]
-  ) {
-    uvScale -=
-      uvScaleSpeed * dt;
-  }
-
-  if (
-    keys["]"]
-  ) {
-    uvScale +=
-      uvScaleSpeed * dt;
-  }
-
-  uvScale =
-    Math.max(
-      0.25,
-      Math.min(
-        5.0,
-        uvScale
-      )
-    );
-}
-
-const shininessSpeed =
-  50.0;
-
-function updateShininess(
-  dt
-) {
-  if (
-    keys["-"] ||
-    keys["_"]
-  ) {
-    shininess -=
-      shininessSpeed * dt;
-  }
-
-  if (
-    keys["+"] ||
-    keys["="]
-  ) {
-    shininess +=
-      shininessSpeed * dt;
-  }
-
-  shininess =
-    Math.max(
-      2.0,
-      Math.min(
-        128.0,
-        shininess
-      )
-    );
-}
-
-function resetScene() {
-  light.position[0] =
-    2.0;
-
-  light.position[1] =
-    2.0;
-
-  light.position[2] =
-    2.0;
-
-  shininess =
-    32.0;
-
-  uvScale =
-    1.0;
-
-  shadingMode =
-    "FLAT";
-
-  filterMode =
-    "LINEAR";
-
-  wrapIndex =
-    0;
-
-  cube.scaleX =
-    1.0;
-
-  cube.scaleY =
-    1.0;
-
-  cube.scaleZ =
-    1.0;
-
-  applyFiltering();
-  applyWrapping();
-}
-
-function updateCube(
-  dt
-) {
-  cube.rotationX +=
-    20.0 * dt;
-
-  cube.rotationY +=
-    35.0 * dt;
-}
-
-function drawScene() {
-  gl.viewport(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-  gl.clearColor(
-    0.025,
-    0.04,
-    0.08,
-    1.0
-  );
+  daun.position[1] = Math.sin(seconds * 0.5) * 0.2; //Efek floating (naik-turun kayk melayang)
 
   gl.clear(
     gl.COLOR_BUFFER_BIT |
     gl.DEPTH_BUFFER_BIT
   );
 
-  gl.useProgram(
-    program
-  );
+  for (const object of scene) {
+    renderObject(object);
+  }
 
-  setupAttribute(
-    positionBuffer,
-    positionLocation,
-    3
-  );
-
-  setupAttribute(
-    texCoordBuffer,
-    texCoordLocation,
-    2
-  );
-
-  const activeNormalBuffer =
-    shadingMode === "FLAT"
-      ? flatNormalBuffer
-      : smoothNormalBuffer;
-
-  setupAttribute(
-    activeNormalBuffer,
-    normalLocation,
-    3
-  );
-
-  const model =
-    createModelMatrix();
-
-  const view =
-    Mat4.lookAt(
-      camera.position,
-      camera.target,
-      camera.up
-    );
-
-  const projection =
-    Mat4.perspective(
-      degToRad(60),
-      canvas.width /
-      canvas.height,
-      0.1,
-      100.0
-    );
-
-  const normalMatrix =
-    normalMatrixFromMat4(
-      model
-    );
-
-  gl.uniformMatrix4fv(
-    modelLocation,
-    false,
-    model
-  );
-
-  gl.uniformMatrix4fv(
-    viewLocation,
-    false,
-    view
-  );
-
-  gl.uniformMatrix4fv(
-    projectionLocation,
-    false,
-    projection
-  );
-
-  gl.uniformMatrix3fv(
-    normalMatrixLocation,
-    false,
-    normalMatrix
-  );
-
-  gl.uniform3fv(
-    lightPositionLocation,
-    light.position
-  );
-
-  gl.uniform3fv(
-    lightColorLocation,
-    light.color
-  );
-
-  gl.uniform3fv(
-    cameraPositionLocation,
-    camera.position
-  );
-
-  gl.uniform1f(
-    ambientLocation,
-    ambientStrength
-  );
-
-  gl.uniform1f(
-    shininessLocation,
-    shininess
-  );
-
-  gl.uniform1f(
-    uvScaleLocation,
-    uvScale
-  );
-
-  gl.activeTexture(
-    gl.TEXTURE0
-  );
-
-  gl.bindTexture(
-    gl.TEXTURE_2D,
-    texture
-  );
-
-  gl.uniform1i(
-    textureLocation,
-    0
-  );
-
-  gl.drawArrays(
-    gl.TRIANGLES,
-    0,
-    36
-  );
+  requestAnimationFrame(animate);
 }
 
-const shadingInfo =
-  document.getElementById(
-    "shadingInfo"
-  );
-
-const filterInfo =
-  document.getElementById(
-    "filterInfo"
-  );
-
-const wrapInfo =
-  document.getElementById(
-    "wrapInfo"
-  );
-
-const uvInfo =
-  document.getElementById(
-    "uvInfo"
-  );
-
-const shininessInfo =
-  document.getElementById(
-    "shininessInfo"
-  );
-
-const lightInfo =
-  document.getElementById(
-    "lightInfo"
-  );
-
-function updateHUD() {
-  shadingInfo.textContent =
-    shadingMode;
-
-  filterInfo.textContent =
-    filterMode;
-
-  wrapInfo.textContent =
-    wrapModes[
-      wrapIndex
-    ];
-
-  uvInfo.textContent =
-    uvScale.toFixed(2);
-
-  shininessInfo.textContent =
-    shininess.toFixed(1);
-
-  lightInfo.textContent =
-    `(${light.position[0].toFixed(2)}, ` +
-    `${light.position[1].toFixed(2)}, ` +
-    `${light.position[2].toFixed(2)})`;
-}
-
-let lastTime =
-  0;
-
-function render(
-  time
-) {
-  let dt =
-    (
-      time -
-      lastTime
-    ) * 0.001;
-
-  lastTime =
-    time;
-
-  dt =
-    Math.min(
-      dt,
-      0.05
-    );
-
-  updateCube(
-    dt
-  );
-
-  updateLight(
-    dt
-  );
-
-  updateUVScale(
-    dt
-  );
-
-  updateShininess(
-    dt
-  );
-
-  drawScene();
-
-  updateHUD();
-
-  requestAnimationFrame(
-    render
-  );
-}
-
-applyFiltering();
-applyWrapping();
-
-requestAnimationFrame(
-  render
-);
+requestAnimationFrame(animate);
+  
