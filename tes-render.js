@@ -212,7 +212,7 @@ const model =
 //edit camera disini
 const cameraPosition = [
   2.5,
-  2.0,
+  -2.0,
   3.5
 ];
 
@@ -414,9 +414,19 @@ const cubeMesh = renderer.createMesh(
   createCube()
 );
 
-const cylinderMesh = renderer.createMesh(
+const tiangBawahMesh = renderer.createMesh(
   "cylinder",
-  createCylinder(0.5, 3, 32) //radius, tinggi, segment/seberapa smooth
+  createCylinder(0.1, 4, 32) //radius, tinggi, segment/seberapa smooth
+);
+
+const tiangAtasMesh = renderer.createMesh(
+  "cylinder",
+  createCylinder(1.0, 0.1, 32) //radius, tinggi, segment/seberapa smooth
+);
+
+const bulatPutihDalamMesh = renderer.createMesh(
+  "cylinder",
+  createCylinder(0.85, 0.11, 32)
 );
 
 const sphereMesh = renderer.createMesh(
@@ -431,6 +441,43 @@ const coneMesh = renderer.createMesh(
 
 //ini parent, ini gak dipanggil, lebih ke nama grupnya aja
 //Kalau mau edit seluruh grup, edit disini
+const tiang = new GameObject({
+  name: "Tiang",
+  position: [0, 0, 0],
+  rotation: [0, 0, 0],
+  scale: [1, 1, 1]
+});
+
+const tiangBawah = new GameObject({
+  name: "TiangBawah",
+  geometry: tiangBawahMesh,
+  position: [0, -4.5, 0],
+  scale: [1, 2, 1],
+  color: [1, 1, 1]
+});
+
+const tiangAtas = new GameObject({
+  name: "TiangAtas",
+  geometry: tiangAtasMesh,
+  position: [0, 0.5, 0],
+  rotation: [90, 30, 0],
+  scale: [1, 1, 1],
+  color: [1, 0, 0]
+});
+
+const bulatPutihDalam = new GameObject({
+  name: "BulatPutihDalam",
+  geometry: bulatPutihDalamMesh,
+  position: [0, 0.5, 0],
+  rotation: [90, 30, 0],
+  scale: [1, 1, 1],
+  color: [1, 1, 1]
+});
+
+tiang.add(tiangBawah);
+tiang.add(tiangAtas);
+tiang.add(bulatPutihDalam);
+
 const building = new GameObject({
 
   name: "Building",
@@ -595,7 +642,11 @@ function renderObject(object) {
 
 const scene = [
   //building, //tadi ini buat contoh aja
-  tree
+  tree,,
+  tiang
+  // building, --------> tadi ini buat contoh aja
+  // tree
+
 
 ];
 
