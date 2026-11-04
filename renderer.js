@@ -1,4 +1,3 @@
-
 export class Renderer {
 
   constructor(gl, program) {

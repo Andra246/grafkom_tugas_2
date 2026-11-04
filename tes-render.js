@@ -1,6 +1,7 @@
 import {
   Mat4,
-  degToRad
+  degToRad,
+  normalMatrixFromMat4
 } from "./math3d.js";
 
 import {
@@ -37,55 +38,90 @@ in vec3 a_normal;
 uniform mat4 u_model;
 uniform mat4 u_view;
 uniform mat4 u_projection;
+uniform mat3 u_normalMatrix;
 
 out vec3 v_normal;
+out vec3 v_worldPosition;
 
 void main() {
 
-  v_normal =
-    mat3(u_model) * a_normal;
+    vec4 worldPosition =
+        u_model * vec4(a_position, 1.0);
 
-  gl_Position =
-    u_projection *
-    u_view *
-    u_model *
-    vec4(a_position, 1.0);
-}
-`;
+    v_worldPosition = worldPosition.xyz;
+
+    v_normal =
+        normalize(u_normalMatrix * a_normal);
+
+    gl_Position =
+        u_projection *
+        u_view *
+        worldPosition;
+}`;
 
 const fragmentShaderSource = `#version 300 es
 
 precision highp float;
 
 in vec3 v_normal;
+in vec3 v_worldPosition;
 
 uniform vec3 u_color;
+uniform vec3 u_lightDirection;
+uniform vec3 u_viewPosition;
+
+uniform float u_ambientStrength;
+uniform float u_diffuseStrength;
+uniform float u_specularStrength;
+uniform float u_shininess;
 
 out vec4 outColor;
 
 void main() {
 
-  vec3 N = normalize(v_normal);
+    vec3 N = normalize(v_normal);
+    vec3 L = normalize(u_lightDirection);
+    vec3 V = normalize(
+        u_viewPosition - v_worldPosition
+    );
 
-  // Direction of our light
-  vec3 L = normalize(vec3(2.0, 3.0, 4.0));
+    // Ambient
+    vec3 ambient =
+        u_ambientStrength * u_color;
 
-  // Diffuse lighting
-  float diffuse =
-    max(dot(N, L), 0.0);
+    // Diffuse
+    float diffuseFactor =
+        max(dot(N, L), 0.0);
 
-  // Ambient lighting
-  float ambient = 0.25;
+    vec3 diffuse =
+        u_diffuseStrength *
+        diffuseFactor *
+        u_color;
 
-  vec3 baseColor = u_color;
+    // Specular
+    vec3 R = reflect(-L, N);
 
-  vec3 finalColor =
-    baseColor *
-    (ambient + diffuse * 0.75);
+    float specularFactor =
+        pow(
+            max(dot(V, R), 0.0),
+            u_shininess
+        );
 
-  outColor =
-    vec4(finalColor, 1.0);
-}`;
+    vec3 specular =
+        u_specularStrength *
+        specularFactor *
+        vec3(1.0);
+
+    if (diffuseFactor <= 0.0) {
+        specular = vec3(0.0);
+    }
+
+    vec3 finalColor =
+        ambient + diffuse + specular;
+
+    outColor = vec4(finalColor, 1.0);
+}
+`;
 
 function createShader(type, source) {
 
@@ -226,6 +262,48 @@ gl.uniformMatrix4fv(
   projection
 );
 
+const normalMatrixLocation =
+  gl.getUniformLocation(
+    program,
+    "u_normalMatrix"
+  );
+
+
+const lightDirectionLocation =
+    gl.getUniformLocation(program, "u_lightDirection");
+
+const viewPositionLocation =
+    gl.getUniformLocation(program, "u_viewPosition");
+
+const ambientLocation =
+    gl.getUniformLocation(program, "u_ambientStrength");
+
+const diffuseLocation =
+    gl.getUniformLocation(program, "u_diffuseStrength");
+
+const specularLocation =
+    gl.getUniformLocation(program, "u_specularStrength");
+
+const shininessLocation =
+    gl.getUniformLocation(program, "u_shininess");
+
+// Lighting configuration
+gl.uniform3fv(
+    lightDirectionLocation,
+    [2.0, 3.0, 4.0]
+);
+
+gl.uniform3fv(
+    viewPositionLocation,
+    cameraPosition
+);
+
+gl.uniform1f(ambientLocation, 0.25);
+gl.uniform1f(diffuseLocation, 0.75);
+gl.uniform1f(specularLocation, 0.3);
+gl.uniform1f(shininessLocation, 32.0);
+
+
 const renderer =
   new Renderer(gl, program);
 
@@ -359,54 +437,61 @@ tree.add(trunk);
 tree.add(leaves);
 
 
-// panggil yg mau di render, tes aja klo di komen 1 yg ilang yg mana
-const objects = [
-  body,
-  roof,
-  entrance,
-  trunk,
-  leaves
+function renderObject(object) {
+
+  const model = object.createModelMatrix();
+
+  if (object.geometry) {
+
+    const normalMatrix =
+      normalMatrixFromMat4(model);
+
+    gl.uniformMatrix3fv(
+      normalMatrixLocation,
+      false,
+      normalMatrix
+    );
+
+    gl.uniformMatrix4fv(
+      modelLocation,
+      false,
+      model
+    );
+
+    gl.uniform3fv(
+      colorLocation,
+      object.color
+    );
+
+    renderer.drawMesh(object.geometry);
+  }
+
+  for (const child of object.children) {
+    renderObject(child);
+  }
+}
+
+const scene = [
+  building,
+  tree
 ];
 
 gl.enable(gl.DEPTH_TEST);
 
 gl.viewport(
-    0,
+  0,
   0,
   canvas.width,
   canvas.height
 );
 
-gl.clearColor(
-  0.05,
-  0.05,
-  0.1,
-  1.0
-);
+gl.clearColor(0.05, 0.05, 0.1, 1.0);
 
 gl.clear(
   gl.COLOR_BUFFER_BIT |
   gl.DEPTH_BUFFER_BIT
 );
 
-for (const object of objects) {
-
-  const model =
-    object.createModelMatrix();
-
-  gl.uniformMatrix4fv(
-    modelLocation,
-    false,
-    model
-  );
-
-  gl.uniform3fv(
-    colorLocation,
-    object.color
-  );
-
-  renderer.drawMesh(
-    object.geometry
-  );
-
+for (const object of scene) {
+  renderObject(object);
 }
